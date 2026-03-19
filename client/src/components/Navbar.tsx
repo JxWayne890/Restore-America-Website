@@ -5,24 +5,26 @@
  */
 import { useState, useEffect } from "react";
 import { Phone, Menu, X, ChevronDown } from "lucide-react";
+import { SERVICE_LOCATIONS } from "@shared/data/locations";
 
-const LOGO_URL = "https://d2xsxph8kpxj0f.cloudfront.net/310519663322351516/3tYmQwW3anv3iwAxp5tEW5/ra-logo-new_fe4cd82a.png";
+const LOGO_URL = "https://i.imgur.com/L4Hc0Pd.png";
 
 const services = [
-  { label: "Hail Damage Repair", href: "#services" },
-  { label: "Wind Damage Repair", href: "#services" },
-  { label: "Fire Damage Restoration", href: "#services" },
-  { label: "Flood & Water Damage", href: "#services" },
-  { label: "Tree Damage Removal", href: "#services" },
-  { label: "Roof Replacement", href: "#services" },
-  { label: "Mitigation & Packout", href: "#services" },
-  { label: "Insurance Claim Help", href: "#services" },
+  { label: "Hail Damage Repair", href: "/#services" },
+  { label: "Wind Damage Repair", href: "/#services" },
+  { label: "Fire Damage Restoration", href: "/#services" },
+  { label: "Flood & Water Damage", href: "/#services" },
+  { label: "Tree Damage Removal", href: "/#services" },
+  { label: "Roof Replacement", href: "/#services" },
+  { label: "Mitigation & Packout", href: "/#services" },
+  { label: "Insurance Claim Help", href: "/#services" },
 ];
 
 export default function Navbar() {
   const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [servicesOpen, setServicesOpen] = useState(false);
+  const [locationsOpen, setLocationsOpen] = useState(false);
 
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 20);
@@ -68,38 +70,28 @@ export default function Navbar() {
       <nav
         className="sticky top-0 z-50 transition-all duration-300"
         style={{
-          backgroundColor: scrolled ? "rgba(13,31,60,0.98)" : "#1B3A6B",
-          backdropFilter: scrolled ? "blur(12px)" : "none",
-          boxShadow: scrolled ? "0 4px 30px rgba(0,0,0,0.4)" : "none",
+          backgroundColor: scrolled ? "rgba(255,255,255,0.85)" : "rgba(255,255,255,0.45)",
+          backdropFilter: scrolled ? "blur(20px)" : "blur(12px)",
+          boxShadow: scrolled ? "0 4px 30px rgba(0,0,0,0.1)" : "none",
+          borderBottom: scrolled ? "1px solid rgba(0,0,0,0.05)" : "none"
         }}
       >
         <div className="container">
-          <div className="flex items-center justify-between h-16 md:h-20">
+          <div className="flex items-center justify-between h-18 md:h-24">
             {/* Logo */}
-            <a href="/" className="flex items-center gap-3 group">
+            <a href="/" className="flex items-center group">
               <img
                 src={LOGO_URL}
                 alt="Restore America Roofing & Restoration"
-                className="h-12 w-12 md:h-14 md:w-14 object-contain group-hover:scale-105 transition-transform duration-300"
+                className="h-14 md:h-18 w-auto object-contain group-hover:scale-105 transition-transform duration-300"
               />
-              <div className="hidden sm:block">
-                <div
-                  className="text-white font-black leading-none"
-                  style={{ fontFamily: "Oswald, sans-serif", fontSize: "1.2rem", letterSpacing: "0.08em" }}
-                >
-                  RESTORE AMERICA
-                </div>
-                <div className="text-white/55 text-[0.6rem] tracking-widest uppercase mt-0.5">
-                  Roofing & Restoration
-                </div>
-              </div>
             </a>
 
             {/* Desktop nav */}
             <div className="hidden lg:flex items-center gap-7">
               <a
-                href="#about"
-                className="text-white/80 hover:text-white text-sm font-medium tracking-widest transition-colors uppercase"
+                href="/#about"
+                className="text-[#1B3A6B] hover:text-[#0D1F3C] text-sm font-medium tracking-widest transition-colors uppercase"
                 style={{ fontFamily: "Oswald, sans-serif" }}
               >
                 About
@@ -112,21 +104,19 @@ export default function Navbar() {
                 onMouseLeave={() => setServicesOpen(false)}
               >
                 <button
-                  className="flex items-center gap-1 text-white/80 hover:text-white text-sm font-medium tracking-widest transition-colors uppercase"
+                  className="flex items-center gap-1 text-[#1B3A6B] hover:text-[#0D1F3C] text-sm font-medium tracking-widest transition-colors uppercase"
                   style={{ fontFamily: "Oswald, sans-serif" }}
                 >
                   Services{" "}
                   <ChevronDown
                     size={14}
-                    className={`transition-transform duration-200 ${servicesOpen ? "rotate-180" : ""}`}
+                    className={`transition-transform duration-200 text-[#CC2222] ${servicesOpen ? "rotate-180" : ""}`}
                   />
                 </button>
                 {servicesOpen && (
                   <div
-                    className="absolute top-full left-0 mt-1 w-56 shadow-2xl overflow-hidden z-50"
+                    className="absolute top-full left-0 mt-1 w-56 shadow-2xl overflow-hidden z-50 bg-white border border-gray-200 rounded-sm"
                     style={{
-                      backgroundColor: "#0D1F3C",
-                      border: "1px solid rgba(255,255,255,0.12)",
                       borderTop: "3px solid #CC2222",
                     }}
                   >
@@ -134,7 +124,7 @@ export default function Navbar() {
                       <a
                         key={s.label}
                         href={s.href}
-                        className="block px-4 py-2.5 text-sm text-white/75 hover:text-white hover:bg-white/10 transition-colors border-b border-white/5 last:border-0"
+                        className="block px-4 py-3 text-sm text-[#1B3A6B] hover:text-[#CC2222] hover:bg-gray-50 transition-colors border-b border-gray-100 last:border-0"
                         style={{ fontFamily: "Roboto, sans-serif" }}
                       >
                         {s.label}
@@ -144,23 +134,67 @@ export default function Navbar() {
                 )}
               </div>
 
+              {/* Locations dropdown */}
+              <div
+                className="relative"
+                onMouseEnter={() => setLocationsOpen(true)}
+                onMouseLeave={() => setLocationsOpen(false)}
+              >
+                <button
+                  className="flex items-center gap-1 text-[#1B3A6B] hover:text-[#0D1F3C] text-sm font-medium tracking-widest transition-colors uppercase"
+                  style={{ fontFamily: "Oswald, sans-serif" }}
+                >
+                  Locations{" "}
+                  <ChevronDown
+                    size={14}
+                    className={`transition-transform duration-200 text-[#CC2222] ${locationsOpen ? "rotate-180" : ""}`}
+                  />
+                </button>
+                {locationsOpen && (
+                  <div
+                    className="absolute top-full left-0 mt-1 w-56 shadow-2xl overflow-hidden z-50 bg-white border border-gray-200 rounded-sm"
+                    style={{
+                      borderTop: "3px solid #CC2222",
+                    }}
+                  >
+                    <a
+                      href="/locations"
+                      className="block px-4 py-3 text-sm text-[#CC2222] font-bold hover:bg-gray-50 transition-colors border-b border-gray-100"
+                      style={{ fontFamily: "Oswald, sans-serif", letterSpacing: "0.06em" }}
+                    >
+                      VIEW ALL LOCATIONS
+                    </a>
+                    {SERVICE_LOCATIONS.map((location) => (
+                      <a
+                        key={location.slug}
+                        href={`/locations/${location.slug}`}
+                        className="block px-4 py-2.5 text-sm text-[#1B3A6B] hover:text-[#CC2222] hover:bg-gray-50 transition-colors border-b border-gray-100 last:border-0"
+                        style={{ fontFamily: "Roboto, sans-serif" }}
+                      >
+                        {location.label}
+                      </a>
+                    ))}
+                  </div>
+                )}
+              </div>
+
               <a
-                href="#process"
-                className="text-white/80 hover:text-white text-sm font-medium tracking-widest transition-colors uppercase"
+                href="/#process"
+                className="text-[#1B3A6B] hover:text-[#0D1F3C] text-sm font-medium tracking-widest transition-colors uppercase"
                 style={{ fontFamily: "Oswald, sans-serif" }}
               >
                 Our Process
               </a>
               <a
-                href="#reviews"
-                className="text-white/80 hover:text-white text-sm font-medium tracking-widest transition-colors uppercase"
+                href="/#reviews"
+                className="text-[#1B3A6B] hover:text-[#0D1F3C] text-sm font-medium tracking-widest transition-colors uppercase"
                 style={{ fontFamily: "Oswald, sans-serif" }}
               >
                 Reviews
               </a>
               <a
-                href="#faq"
-                className="text-white/80 hover:text-white text-sm font-medium tracking-widest transition-colors uppercase"
+                href="/#faq"
+                className="text-[#1B3A6B] hover:text-[#0D1F3C] text-sm font-medium tracking-widest transition-colors uppercase"
                 style={{ fontFamily: "Oswald, sans-serif" }}
               >
                 FAQ
@@ -171,14 +205,14 @@ export default function Navbar() {
             <div className="hidden lg:flex items-center gap-4">
               <a
                 href="tel:7703735663"
-                className="flex items-center gap-2 text-white/75 hover:text-white transition-colors text-sm"
+                className="flex items-center gap-2 text-[#1B3A6B] hover:text-[#0D1F3C] transition-colors text-sm font-bold"
                 style={{ fontFamily: "Oswald, sans-serif", letterSpacing: "0.04em" }}
               >
-                <Phone size={15} />
+                <Phone size={15} className="text-[#CC2222]" />
                 (770) 373-5663
               </a>
               <a
-                href="#contact"
+                href="/#inspection"
                 className="patriot-red-btn px-5 py-2.5 rounded-sm text-sm"
               >
                 FREE INSPECTION
@@ -187,7 +221,7 @@ export default function Navbar() {
 
             {/* Mobile toggle */}
             <button
-              className="lg:hidden text-white p-2"
+              className="lg:hidden text-[#1B3A6B] p-2"
               onClick={() => setMobileOpen(!mobileOpen)}
             >
               {mobileOpen ? <X size={24} /> : <Menu size={24} />}
@@ -199,37 +233,60 @@ export default function Navbar() {
         {mobileOpen && (
           <div
             className="lg:hidden border-t"
-            style={{ backgroundColor: "#0D1F3C", borderColor: "rgba(255,255,255,0.1)" }}
+            style={{ backgroundColor: "#FFFFFF", borderColor: "rgba(0,0,0,0.05)" }}
           >
             <div className="container py-4 flex flex-col gap-1">
               {[
-                { label: "About", href: "#about" },
-                { label: "Services", href: "#services" },
-                { label: "Our Process", href: "#process" },
-                { label: "Reviews", href: "#reviews" },
-                { label: "FAQ", href: "#faq" },
+                { label: "About", href: "/#about" },
+                { label: "Services", href: "/#services" },
+                { label: "Our Process", href: "/#process" },
+                { label: "Reviews", href: "/#reviews" },
+                { label: "FAQ", href: "/#faq" },
+                { label: "Locations", href: "/locations" },
               ].map((item) => (
                 <a
                   key={item.label}
                   href={item.href}
                   onClick={() => setMobileOpen(false)}
-                  className="text-white/80 hover:text-white py-3 px-2 text-sm uppercase tracking-widest border-b border-white/10"
+                  className="text-[#1B3A6B] hover:text-[#CC2222] py-4 px-3 text-sm font-bold uppercase tracking-widest border-b border-gray-100 last:border-0"
                   style={{ fontFamily: "Oswald, sans-serif" }}
                 >
                   {item.label}
                 </a>
               ))}
-              <div className="pt-3 flex flex-col gap-2">
+              <div className="pt-4 px-2">
+                <div
+                  className="text-[#1B3A6B]/50 text-xs uppercase tracking-widest py-2"
+                  style={{ fontFamily: "Oswald, sans-serif" }}
+                >
+                  Service Locations
+                </div>
+                <div className="grid grid-cols-2 gap-1.5">
+                  {SERVICE_LOCATIONS.map((location) => (
+                    <a
+                      key={location.slug}
+                      href={`/locations/${location.slug}`}
+                      onClick={() => setMobileOpen(false)}
+                      className="text-[#1B3A6B] hover:text-[#CC2222] py-2.5 px-3 text-[0.7rem] font-bold border border-gray-100 bg-gray-50/50 hover:bg-gray-50 transition-colors rounded-sm"
+                      style={{ fontFamily: "Oswald, sans-serif" }}
+                    >
+                      {location.label}
+                    </a>
+                  ))}
+                </div>
+              </div>
+              <div className="pt-6 flex flex-col gap-3">
                 <a
                   href="tel:8445387737"
-                  className="patriot-navy-btn px-4 py-3 rounded-sm text-center text-sm"
-                  style={{ backgroundColor: "#1B3A6B" }}
+                  className="flex items-center justify-center gap-2 border-2 border-[#1B3A6B] text-[#1B3A6B] px-4 py-3.5 rounded-sm text-center text-sm font-bold tracking-widest"
+                  style={{ fontFamily: "Oswald, sans-serif" }}
                 >
-                  CALL 844-LETS-RESTORE
+                  <Phone size={16} className="text-[#CC2222]" />
+                  (770) 373-5663
                 </a>
                 <a
-                  href="#contact"
-                  className="patriot-red-btn px-4 py-3 rounded-sm text-center text-sm"
+                  href="/#inspection"
+                  className="patriot-red-btn px-4 py-4 rounded-sm text-center text-sm font-bold tracking-widest"
                   onClick={() => setMobileOpen(false)}
                 >
                   GET FREE INSPECTION

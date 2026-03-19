@@ -4,8 +4,9 @@
  * Logo: American flag emblem
  */
 import { Phone, Mail, MapPin, Facebook, Instagram, Youtube } from "lucide-react";
+import { SERVICE_LOCATIONS } from "@shared/data/locations";
 
-const LOGO_URL = "https://d2xsxph8kpxj0f.cloudfront.net/310519663322351516/3tYmQwW3anv3iwAxp5tEW5/ra-logo-new_fe4cd82a.png";
+const LOGO_URL = "https://i.imgur.com/L4Hc0Pd.png";
 
 const services = [
   "Roof Repair & Replacement",
@@ -17,19 +18,6 @@ const services = [
   "Build Back & Reconstruction",
   "Insurance Claim Management",
   "Commercial Roofing",
-];
-
-const serviceAreas = [
-  "Atlanta, GA",
-  "Walton County, GA",
-  "Jersey, GA",
-  "Covington, GA",
-  "Monroe, GA",
-  "Loganville, GA",
-  "Orlando, FL",
-  "Tampa, FL",
-  "St. Louis, MO",
-  "Kansas City, MO",
 ];
 
 export default function Footer() {
@@ -139,7 +127,7 @@ export default function Footer() {
               {services.map((service) => (
                 <li key={service}>
                   <a
-                    href="#services"
+                    href="/#services"
                     className="text-white/55 hover:text-white text-sm transition-colors flex items-center gap-2"
                     style={{ fontFamily: "Roboto, sans-serif" }}
                   >
@@ -160,15 +148,16 @@ export default function Footer() {
               Service Areas
             </h4>
             <ul className="flex flex-col gap-2">
-              {serviceAreas.map((area) => (
-                <li key={area}>
-                  <span
-                    className="text-white/55 text-sm flex items-center gap-2"
+              {SERVICE_LOCATIONS.map((location) => (
+                <li key={location.slug}>
+                  <a
+                    href={`/locations/${location.slug}`}
+                    className="text-white/55 hover:text-white text-sm transition-colors flex items-center gap-2"
                     style={{ fontFamily: "Roboto, sans-serif" }}
                   >
                     <span className="w-1 h-1 flex-shrink-0 rounded-full" style={{ backgroundColor: "#1B3A6B" }} />
-                    {area}
-                  </span>
+                    {location.label}
+                  </a>
                 </li>
               ))}
             </ul>
@@ -207,7 +196,7 @@ export default function Footer() {
               </p>
             </div>
             <a
-              href="#inspection"
+              href="/#inspection"
               className="block text-white text-center py-3.5 font-bold tracking-wider uppercase transition-colors text-sm hover:opacity-90"
               style={{ backgroundColor: "#CC2222", fontFamily: "Oswald, sans-serif", letterSpacing: "0.1em" }}
             >

@@ -4,6 +4,7 @@
  * Urgency-driven final call to action
  */
 import { ArrowRight, Phone, Clock, AlertTriangle } from "lucide-react";
+import { SERVICE_LOCATIONS } from "@shared/data/locations";
 
 const TEAM_IMAGE = "https://d2xsxph8kpxj0f.cloudfront.net/310519663322351516/3tYmQwW3anv3iwAxp5tEW5/restoration-team-GjZEbg2NQJAv7Lm2ggu8ZX.webp";
 
@@ -97,13 +98,15 @@ export default function CtaBanner() {
             >
               Serving:
             </span>
-            {[
-              "Atlanta, GA", "Walton County, GA", "Jersey, GA", "Orlando, FL",
-              "Tampa, FL", "Jacksonville, FL", "St. Louis, MO", "Kansas City, MO"
-            ].map((area) => (
-              <span key={area} className="opacity-90" style={{ fontFamily: "Roboto, sans-serif" }}>
-                {area}
-              </span>
+            {SERVICE_LOCATIONS.map((location) => (
+              <a
+                key={location.slug}
+                href={`/locations/${location.slug}`}
+                className="opacity-90 hover:opacity-100 transition-all px-2.5 py-1 border border-white/20 hover:border-white/60 rounded-sm"
+                style={{ fontFamily: "Roboto, sans-serif" }}
+              >
+                {location.label}
+              </a>
             ))}
           </div>
         </div>

@@ -5,6 +5,7 @@ import { nanoid } from "nanoid";
 import path from "path";
 import { createServer as createViteServer } from "vite";
 import viteConfig from "../../vite.config";
+import { injectLocationSeo } from "./seo";
 
 export async function setupVite(app: Express, server: Server) {
   const serverOptions = {
@@ -38,6 +39,10 @@ export async function setupVite(app: Express, server: Server) {
         `src="/src/main.tsx"`,
         `src="/src/main.tsx?v=${nanoid()}"`
       );
+      
+      // Inject location-specific SEO meta tags and schema
+      template = injectLocationSeo(template, url);
+      
       const page = await vite.transformIndexHtml(url, template);
       res.status(200).set({ "Content-Type": "text/html" }).end(page);
     } catch (e) {
@@ -61,7 +66,15 @@ export function serveStatic(app: Express) {
   app.use(express.static(distPath));
 
   // fall through to index.html if the file doesn't exist
-  app.use("*", (_req, res) => {
-    res.sendFile(path.resolve(distPath, "index.html"));
+  app.use("*", async (req, res) => {
+    try {
+      const indexPath = path.resolve(distPath, "index.html");
+      const html = await fs.promises.readFile(indexPath, "utf-8");
+      const finalHtml = injectLocationSeo(html, req.originalUrl);
+      res.status(200).set({ "Content-Type": "text/html" }).send(finalHtml);
+    } catch (e) {
+      console.error(e);
+      res.status(500).send("Server Error reading index.html");
+    }
   });
 }

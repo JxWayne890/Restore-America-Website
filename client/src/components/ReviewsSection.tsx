@@ -2,7 +2,8 @@
  * STORM SHIELD DESIGN — Reviews Section
  * Real Google reviews with 5-star display
  */
-import { Star, Quote } from "lucide-react";
+import LeadContactFormCard from "@/components/LeadContactFormCard";
+import { Quote, Star } from "lucide-react";
 
 const reviews = [
   {
@@ -158,6 +159,13 @@ export default function ReviewsSection() {
             VIEW ALL 113 GOOGLE REVIEWS
           </a>
         </div>
+
+        <LeadContactFormCard
+          className="max-w-4xl mx-auto mt-12"
+          source="google"
+          title="REQUEST A FREE INSPECTION"
+          subtitle="Prefer this section? Send your contact details here and we will call you back."
+        />
       </div>
     </section>
   );
