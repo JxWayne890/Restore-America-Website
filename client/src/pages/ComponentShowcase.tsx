@@ -178,6 +178,23 @@ export default function ComponentsShowcase() {
   const [date, setDate] = useState<Date | undefined>(new Date());
   const [datePickerDate, setDatePickerDate] = useState<Date>();
   const [selectedFruits, setSelectedFruits] = useState<string[]>([]);
+  const websitePayloadExample = {
+    fullName: "John Doe",
+    phone: "555-0123",
+    email: "john@example.com",
+    propertyAddress: "123 Main St, Dallas, TX 75201",
+    damageType: "Hail Damage",
+    propertyOwner: "Yes, I own this property",
+    insuranceClaimStatus: "Yes, claim is open",
+    source: "Main Website",
+    formAnswers: {
+      step1: "Hail Damage",
+      step2: "Yes, I own this property",
+      step3: "Yes, claim is open",
+    },
+    utmCampaign: "spring-hail-2026",
+    anyFutureQuestionKey: "any future value",
+  };
   const [progress, setProgress] = useState(33);
   const [currentPage, setCurrentPage] = useState(2);
   const [openCombobox, setOpenCombobox] = useState(false);
@@ -943,13 +960,16 @@ export default function ComponentsShowcase() {
                   <CardHeader>
                     <CardTitle>Settings</CardTitle>
                     <CardDescription>
-                      Manage your settings here.
+                      Website webhook payload example for <code>/api/intake</code>.
                     </CardDescription>
                   </CardHeader>
-                  <CardContent>
+                  <CardContent className="space-y-4">
                     <p className="text-sm text-muted-foreground">
-                      Settings content goes here.
+                      Include the base contact fields, 4-step answers, and any future keys. Unknown keys are preserved automatically.
                     </p>
+                    <pre className="rounded-md border bg-muted p-3 text-xs overflow-x-auto">
+                      {JSON.stringify(websitePayloadExample, null, 2)}
+                    </pre>
                   </CardContent>
                 </Card>
               </TabsContent>
