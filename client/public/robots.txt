@@ -1,0 +1,9 @@
+# Restore America Roofing & Restoration
+# https://restoreamericaroof.com
+
+User-agent: *
+Allow: /
+Disallow: /admin
+Disallow: /api/
+
+Sitemap: https://restoreamericaroof.com/sitemap.xml
