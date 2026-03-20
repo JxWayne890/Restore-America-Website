@@ -179,6 +179,7 @@ export default function ComponentsShowcase() {
   const [datePickerDate, setDatePickerDate] = useState<Date>();
   const [selectedFruits, setSelectedFruits] = useState<string[]>([]);
   const websitePayloadExample = {
+    organizationId: "your-organization-id",
     fullName: "John Doe",
     phone: "555-0123",
     email: "john@example.com",
@@ -965,7 +966,7 @@ export default function ComponentsShowcase() {
                   </CardHeader>
                   <CardContent className="space-y-4">
                     <p className="text-sm text-muted-foreground">
-                      Include the base contact fields, 4-step answers, and any future keys. Unknown keys are preserved automatically.
+                      Post to <code>/api/intake/your-organization-id</code> and include the base contact fields, 4-step answers, and any future keys. Unknown keys are preserved automatically.
                     </p>
                     <pre className="rounded-md border bg-muted p-3 text-xs overflow-x-auto">
                       {JSON.stringify(websitePayloadExample, null, 2)}

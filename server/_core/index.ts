@@ -40,7 +40,9 @@ async function startServer() {
   app.use(express.urlencoded({ limit: "50mb", extended: true }));
   app.all("/api/health", handleHealthRequest);
   app.all("/api/intake", handleIntakeRequest);
+  app.all("/api/intake/:organizationId", handleIntakeRequest);
   app.all("/api/leads", handleLeadsRequest);
+  app.all("/api/leads/:organizationId", handleLeadsRequest);
   // OAuth callback under /api/oauth/callback
   registerOAuthRoutes(app);
   // tRPC API

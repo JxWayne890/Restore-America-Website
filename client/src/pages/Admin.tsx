@@ -1,12 +1,16 @@
 import { useState } from "react";
 import { trpc } from "@/lib/trpc";
+import {
+  getConfiguredOrganizationId,
+  getOrganizationWebhookEndpoint,
+} from "@/lib/intake";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { getLoginUrl } from "@/const";
 import {
   Users, TrendingUp, Calendar, AlertTriangle, Star,
   Phone, Mail, MapPin, Clock, CheckCircle, XCircle,
   Flame, Droplets, Wind, Shield, ChevronDown, ChevronRight,
-  Plus, Edit, Zap, BarChart3, MessageSquare, Home
+  Plus, Edit, Zap, BarChart3, MessageSquare, Home, Copy, Check
 } from "lucide-react";
 
 const STAGE_COLORS: Record<string, string> = {
@@ -49,6 +53,7 @@ export default function Admin() {
   const [stormForm, setStormForm] = useState({ title: "", message: "", affectedAreas: "", severity: "warning" as any });
   const [noteForm, setNoteForm] = useState({ type: "note" as any, content: "" });
   const [stageFilter, setStageFilter] = useState<string>("");
+  const [copiedWebhook, setCopiedWebhook] = useState(false);
 
   // Queries
   const { data: stats, refetch: refetchStats } = trpc.leads.stats.useQuery();
@@ -71,6 +76,44 @@ export default function Admin() {
   const addNote = trpc.leads.addNote.useMutation({ onSuccess: () => { refetchDetail(); setNoteForm({ type: "note", content: "" }); } });
   const createAlert = trpc.stormAlerts.create.useMutation({ onSuccess: () => { refetchAlerts(); setStormForm({ title: "", message: "", affectedAreas: "", severity: "warning" }); } });
   const deactivateAlert = trpc.stormAlerts.deactivate.useMutation({ onSuccess: () => refetchAlerts() });
+
+  const organizationId = getConfiguredOrganizationId() ?? user?.openId ?? "default";
+  const webhookEndpoint = getOrganizationWebhookEndpoint(
+    organizationId,
+    typeof window === "undefined"
+      ? "https://e3-c-grid.vercel.app/api/intake"
+      : `${window.location.origin}/api/intake`
+  );
+  const webhookExamplePayload = JSON.stringify(
+    {
+      fullName: "John Doe",
+      phone: "555-0123",
+      email: "john@example.com",
+      propertyAddress: "123 Main St, Dallas, TX 75201",
+      damageType: "Hail Damage",
+      propertyOwner: "Yes, I own this property",
+      insuranceClaimStatus: "Yes, claim is open",
+      source: "Main Website",
+      utmCampaign: "spring-storm-ads",
+      formAnswers: {
+        step1: "Hail Damage",
+        step2: "Yes, I own this property",
+        step3: "Yes, claim is open",
+      },
+    },
+    null,
+    2
+  );
+
+  const copyWebhookEndpoint = async () => {
+    try {
+      await navigator.clipboard.writeText(webhookEndpoint);
+      setCopiedWebhook(true);
+      window.setTimeout(() => setCopiedWebhook(false), 2000);
+    } catch {
+      setCopiedWebhook(false);
+    }
+  };
 
   if (loading) return (
     <div className="min-h-screen flex items-center justify-center" style={{ background: "#0D1F3C" }}>
@@ -580,6 +623,47 @@ export default function Admin() {
         {/* ─── ANALYTICS TAB ─── */}
         {activeTab === "analytics" && (
           <div className="space-y-6">
+            <div className="bg-white rounded-xl shadow-sm p-6">
+              <div className="flex items-start justify-between gap-4 mb-4">
+                <div>
+                  <h3 className="font-bold text-gray-800 text-lg" style={{ fontFamily: "Oswald, sans-serif" }}>
+                    LEAD INTAKE WEBHOOK
+                  </h3>
+                  <p className="text-gray-500 text-sm mt-1">
+                    Each account gets its own webhook URL scoped by organization ID.
+                  </p>
+                </div>
+                <button
+                  onClick={copyWebhookEndpoint}
+                  className="flex items-center gap-2 px-3 py-2 rounded-lg border border-gray-200 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                >
+                  {copiedWebhook ? <Check className="w-4 h-4 text-green-600" /> : <Copy className="w-4 h-4" />}
+                  {copiedWebhook ? "Copied" : "Copy"}
+                </button>
+              </div>
+
+              <div className="grid lg:grid-cols-[1fr,1.2fr] gap-4">
+                <div className="space-y-4">
+                  <div className="rounded-xl border border-gray-200 p-4 bg-gray-50">
+                    <p className="text-xs uppercase tracking-wide text-gray-400 mb-2">Organization ID</p>
+                    <p className="font-mono text-sm text-gray-800 break-all">{organizationId}</p>
+                  </div>
+                  <div className="rounded-xl border border-gray-200 p-4 bg-gray-50">
+                    <p className="text-xs uppercase tracking-wide text-gray-400 mb-2">Webhook Endpoint</p>
+                    <p className="font-mono text-sm text-emerald-700 break-all">{webhookEndpoint}</p>
+                  </div>
+                </div>
+
+                <div className="rounded-xl border border-gray-200 p-4 bg-gray-50">
+                  <div className="flex items-center justify-between gap-3 mb-3">
+                    <p className="text-xs uppercase tracking-wide text-gray-400">Example Payload</p>
+                    <p className="text-xs uppercase tracking-wide text-gray-300">application/json</p>
+                  </div>
+                  <pre className="text-xs text-gray-700 overflow-x-auto whitespace-pre-wrap break-words">{webhookExamplePayload}</pre>
+                </div>
+              </div>
+            </div>
+
             {/* Summary Cards */}
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
               {[

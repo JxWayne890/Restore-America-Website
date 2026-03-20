@@ -9,6 +9,7 @@ type ClaimStatus = "not_filed" | "open" | "denied" | "paid";
 type LeadSource = "website" | "facebook" | "google" | "referral" | "storm_canvass" | "other";
 
 export type NormalizedIntakeLead = {
+  organizationId: string;
   fullName?: string;
   firstName?: string;
   lastName?: string;
@@ -38,12 +39,14 @@ type IntakeSubmissionResult =
 
 declare global {
   // eslint-disable-next-line no-var
-  var __E3C_GRID_LEADS__: IntakeLeadRecord[] | undefined;
+  var __E3C_GRID_LEADS_BY_ORG__: Record<string, IntakeLeadRecord[]> | undefined;
   // eslint-disable-next-line no-var
   var __E3C_GRID_LEAD_ID__: number | undefined;
 }
 
 const KNOWN_INTAKE_KEYS = new Set([
+  "organizationId",
+  "orgId",
   "fullName",
   "firstName",
   "lastName",
@@ -100,6 +103,63 @@ function asString(value: unknown): string | undefined {
   return trimmed ? trimmed : undefined;
 }
 
+function asRequestString(value: unknown): string | undefined {
+  if (Array.isArray(value)) {
+    return asString(value[0]);
+  }
+
+  return asString(value);
+}
+
+function normalizeOrganizationId(value: unknown): string | undefined {
+  const rawValue = asRequestString(value);
+  if (!rawValue) {
+    return undefined;
+  }
+
+  return rawValue.replace(/\s+/g, "-");
+}
+
+function extractOrganizationIdFromPath(requestPath?: string): string | undefined {
+  const normalizedPath = asString(requestPath);
+  if (!normalizedPath) {
+    return undefined;
+  }
+
+  const match = normalizedPath.match(/\/api\/(?:intake|leads)\/([^/?#]+)/);
+  return normalizeOrganizationId(match?.[1]);
+}
+
+function getDefaultOrganizationId(): string {
+  return (
+    normalizeOrganizationId(process.env.DEFAULT_ORGANIZATION_ID) ??
+    normalizeOrganizationId(process.env.VITE_ORGANIZATION_ID) ??
+    "default"
+  );
+}
+
+function resolveOrganizationId(input: {
+  requestPath?: string;
+  paramsOrganizationId?: unknown;
+  queryOrganizationId?: unknown;
+  queryOrgId?: unknown;
+  headerOrganizationId?: unknown;
+  headerOrgId?: unknown;
+  payload?: JsonObject;
+}): string {
+  return (
+    extractOrganizationIdFromPath(input.requestPath) ??
+    normalizeOrganizationId(input.paramsOrganizationId) ??
+    normalizeOrganizationId(input.queryOrganizationId) ??
+    normalizeOrganizationId(input.queryOrgId) ??
+    normalizeOrganizationId(input.headerOrganizationId) ??
+    normalizeOrganizationId(input.headerOrgId) ??
+    normalizeOrganizationId(input.payload?.organizationId) ??
+    normalizeOrganizationId(input.payload?.orgId) ??
+    getDefaultOrganizationId()
+  );
+}
+
 function pickFirstString(source: JsonObject, keys: string[]): string | undefined {
   for (const key of keys) {
     const value = asString(source[key]);
@@ -152,7 +212,7 @@ function extractCustomFields(payload: JsonObject): JsonObject {
   return customFields;
 }
 
-function normalizePayload(input: unknown): IntakeSubmissionResult {
+function normalizePayload(input: unknown, organizationId: string): IntakeSubmissionResult {
   const payload = parseRawSubmission(input);
 
   let fullName = pickFirstString(payload, ["fullName", "name"]);
@@ -204,6 +264,7 @@ function normalizePayload(input: unknown): IntakeSubmissionResult {
   const normalizedLead: IntakeLeadRecord = {
     id: nextLeadId(),
     createdAt: new Date().toISOString(),
+    organizationId,
     fullName,
     firstName,
     lastName,
@@ -227,12 +288,21 @@ function normalizePayload(input: unknown): IntakeSubmissionResult {
   };
 }
 
-function getMemoryLeads(): IntakeLeadRecord[] {
-  if (!globalThis.__E3C_GRID_LEADS__) {
-    globalThis.__E3C_GRID_LEADS__ = [];
+function getMemoryLeadStore(): Record<string, IntakeLeadRecord[]> {
+  if (!globalThis.__E3C_GRID_LEADS_BY_ORG__) {
+    globalThis.__E3C_GRID_LEADS_BY_ORG__ = {};
   }
 
-  return globalThis.__E3C_GRID_LEADS__;
+  return globalThis.__E3C_GRID_LEADS_BY_ORG__;
+}
+
+function getMemoryLeads(organizationId: string): IntakeLeadRecord[] {
+  const store = getMemoryLeadStore();
+  if (!store[organizationId]) {
+    store[organizationId] = [];
+  }
+
+  return store[organizationId];
 }
 
 function nextLeadId(): number {
@@ -287,6 +357,39 @@ function mapPropertyOwner(value?: string): boolean | undefined {
   return undefined;
 }
 
+function serializeLeadNotes(organizationId: string, message?: string): string | undefined {
+  const parts = [`[organizationId:${organizationId}]`];
+  const normalizedMessage = message?.trim();
+  if (normalizedMessage) {
+    parts.push(normalizedMessage);
+  }
+
+  return parts.join("\n");
+}
+
+function deserializeLeadNotes(notes?: string | null): {
+  organizationId: string;
+  message?: string;
+} {
+  const normalizedNotes = notes?.trim();
+  if (!normalizedNotes) {
+    return { organizationId: getDefaultOrganizationId() };
+  }
+
+  const match = normalizedNotes.match(/^\[organizationId:([^\]]+)\]\n?([\s\S]*)$/);
+  if (!match) {
+    return {
+      organizationId: getDefaultOrganizationId(),
+      message: normalizedNotes,
+    };
+  }
+
+  return {
+    organizationId: normalizeOrganizationId(match[1]) ?? getDefaultOrganizationId(),
+    message: match[2]?.trim() || undefined,
+  };
+}
+
 function toDatabaseLead(lead: IntakeLeadRecord): InsertLead {
   const utmSource = asString(lead.customFields.utmSource);
   const utmMedium = asString(lead.customFields.utmMedium);
@@ -301,7 +404,7 @@ function toDatabaseLead(lead: IntakeLeadRecord): InsertLead {
     isOwner: mapPropertyOwner(lead.propertyOwner),
     claimStatus: mapClaimStatus(lead.insuranceClaimStatus),
     source: mapSource(lead.source),
-    notes: lead.message,
+    notes: serializeLeadNotes(lead.organizationId, lead.message),
     utmSource,
     utmMedium,
     utmCampaign,
@@ -324,14 +427,17 @@ async function persistLead(lead: IntakeLeadRecord): Promise<IntakeLeadRecord> {
   return lead;
 }
 
-export async function submitLeadIntake(input: unknown): Promise<IntakeSubmissionResult> {
-  const normalized = normalizePayload(input);
+export async function submitLeadIntake(
+  input: unknown,
+  organizationId: string
+): Promise<IntakeSubmissionResult> {
+  const normalized = normalizePayload(input, organizationId);
   if (!normalized.success) {
     return normalized;
   }
 
   const persisted = await persistLead(normalized.lead);
-  getMemoryLeads().unshift(persisted);
+  getMemoryLeads(organizationId).unshift(persisted);
 
   return {
     success: true,
@@ -341,10 +447,12 @@ export async function submitLeadIntake(input: unknown): Promise<IntakeSubmission
 
 function mapDbLeadToIntakeRecord(dbLead: Awaited<ReturnType<typeof getLeads>>[number]): IntakeLeadRecord {
   const [firstName, ...lastNameParts] = (dbLead.name ?? "").split(/\s+/).filter(Boolean);
+  const parsedNotes = deserializeLeadNotes(dbLead.notes);
 
   return {
     id: dbLead.id,
     createdAt: dbLead.createdAt?.toISOString?.() ?? new Date().toISOString(),
+    organizationId: parsedNotes.organizationId,
     fullName: dbLead.name ?? undefined,
     firstName: firstName || undefined,
     lastName: lastNameParts.join(" ") || undefined,
@@ -356,10 +464,11 @@ function mapDbLeadToIntakeRecord(dbLead: Awaited<ReturnType<typeof getLeads>>[nu
     propertyOwner: typeof dbLead.isOwner === "boolean" ? (dbLead.isOwner ? "Yes" : "No") : undefined,
     insuranceClaimStatus: dbLead.claimStatus ?? undefined,
     source: dbLead.source ?? undefined,
-    message: dbLead.notes ?? undefined,
+    message: parsedNotes.message,
     customFields: {},
     rawSubmission: {
       id: dbLead.id,
+      organizationId: parsedNotes.organizationId,
       name: dbLead.name,
       phone: dbLead.phone,
       email: dbLead.email,
@@ -372,18 +481,26 @@ function mapDbLeadToIntakeRecord(dbLead: Awaited<ReturnType<typeof getLeads>>[nu
   };
 }
 
-export async function listStoredLeads(): Promise<IntakeLeadRecord[]> {
+export async function listStoredLeads(organizationId?: string): Promise<IntakeLeadRecord[]> {
   try {
     const db = await getDb();
     if (db) {
       const records = await getLeads({ limit: 200, offset: 0 });
-      return records.map(mapDbLeadToIntakeRecord);
+      const mappedRecords = records.map(mapDbLeadToIntakeRecord);
+      if (organizationId) {
+        return mappedRecords.filter((record) => record.organizationId === organizationId);
+      }
+      return mappedRecords;
     }
   } catch {
     // Fall through to in-memory store when DB is unavailable.
   }
 
-  return getMemoryLeads();
+  if (organizationId) {
+    return getMemoryLeads(organizationId);
+  }
+
+  return Object.values(getMemoryLeadStore()).flat();
 }
 
 function getAllowedOrigins(): string[] {
@@ -434,14 +551,23 @@ export async function handleIntakeRequest(req: Request, res: Response): Promise<
   }
 
   try {
-    const result = await submitLeadIntake(req.body);
+    const organizationId = resolveOrganizationId({
+      requestPath: req.originalUrl || req.url,
+      paramsOrganizationId: req.params.organizationId,
+      queryOrganizationId: req.query.organizationId,
+      queryOrgId: req.query.orgId,
+      headerOrganizationId: req.headers["x-organization-id"],
+      headerOrgId: req.headers["x-org-id"],
+      payload: parseRawSubmission(req.body),
+    });
+    const result = await submitLeadIntake(req.body, organizationId);
 
     if (!result.success) {
       res.status(400).json({ error: result.error });
       return;
     }
 
-    res.status(201).json({ success: true, lead: result.lead });
+    res.status(201).json({ success: true, organizationId, lead: result.lead });
   } catch {
     res.status(500).json({ error: "Failed to submit intake payload." });
   }
@@ -462,8 +588,24 @@ export async function handleLeadsRequest(req: Request, res: Response): Promise<v
   }
 
   try {
-    const leads = await listStoredLeads();
-    res.status(200).json({ success: true, leads });
+    const organizationId = resolveOrganizationId({
+      requestPath: req.originalUrl || req.url,
+      paramsOrganizationId: req.params.organizationId,
+      queryOrganizationId: req.query.organizationId,
+      queryOrgId: req.query.orgId,
+      headerOrganizationId: req.headers["x-organization-id"],
+      headerOrgId: req.headers["x-org-id"],
+    });
+    const shouldFilterByOrganization =
+      Boolean(req.params.organizationId) ||
+      req.query.organizationId !== undefined ||
+      req.query.orgId !== undefined ||
+      req.headers["x-organization-id"] !== undefined ||
+      req.headers["x-org-id"] !== undefined;
+    const leads = await listStoredLeads(
+      shouldFilterByOrganization ? organizationId : undefined
+    );
+    res.status(200).json({ success: true, organizationId, leads });
   } catch {
     res.status(500).json({ error: "Failed to fetch leads." });
   }
