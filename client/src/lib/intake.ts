@@ -4,11 +4,11 @@ type IntakeResponseBody = {
   error?: string;
 };
 
-const CANONICAL_INTAKE_URL = "https://e3cgrid.vercel.app/api/intake";
+const CANONICAL_INTAKE_URL = "https://e3-c-grid.vercel.app/api/intake";
 
 function getIntakeEndpoints(): string[] {
   const configured = (import.meta.env.VITE_INTAKE_API_URL as string | undefined)?.trim();
-  const endpoints = [configured, "/api/intake", CANONICAL_INTAKE_URL].filter(
+  const endpoints = [configured, CANONICAL_INTAKE_URL, "/api/intake"].filter(
     (value): value is string => Boolean(value)
   );
   return Array.from(new Set(endpoints));

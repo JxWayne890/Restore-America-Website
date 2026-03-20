@@ -5,7 +5,7 @@
 Submit lead intake payloads to:
 
 - `POST /api/intake`
-- Production example: `https://e3cgrid.vercel.app/api/intake`
+- Production example: `https://e3-c-grid.vercel.app/api/intake`
 
 ### Payload Contract
 
@@ -32,7 +32,7 @@ Submit lead intake payloads to:
 ### Browser Fetch Example
 
 ```ts
-await fetch("https://e3cgrid.vercel.app/api/intake", {
+await fetch("https://e3-c-grid.vercel.app/api/intake", {
   method: "POST",
   headers: {
     "Content-Type": "application/json",
